@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include "../include/constants.h"
+#include "../include/timer.h"
 #include "SevSeg.h"
 #include "TimerOne.h"
 
 SevSeg sevseg; // instantiate a seven segment object
 static const int debounceDelay = 50;
-int seconds = 60 * 15;
 
 void tick();
 
@@ -53,10 +53,9 @@ void setup() {
     digitalWrite(pin::led_countB, HIGH);
     digitalWrite(pin::led_countC, HIGH);
     digitalWrite(pin::led_countD, HIGH);
-
-    tick();
 }
 
+Timer timer;
 int count = 0;
 int button1_pressed = LOW;
 int button2_pressed = LOW;
@@ -65,18 +64,31 @@ unsigned long button2_pressed_time = 0;
 unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
 
+// do not mess with memory; keep as short as possible
 void tick() {
+    const float time = timer.current_time();
+    if (timer.state() == Timer::Pause) {
+        return;
+    }
+
+    if (time <= 0) {
+        if (timer.state() == Timer::Work) {
+            timer.set_state(timer.pomodoros_completed() < 4 ?
+                Timer::BreakShort :
+                Timer::BreakLong);
+            timer.pomodoro_complete();
+        } else {
+            timer.set_state(Timer::Work);
+        }
+    }
+
     tone(pin::audio_ticker, 330, 5);
-    seconds--;
-
-    const int minutes = seconds / 60;
-    const int seconds_difference = seconds - minutes*60;
-    const float time = minutes + seconds_difference/100.0;
-
+    timer.tick();
     sevseg.setNumber(time, 2);
 }
 
-void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value) {
+void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
+{
     const int reading = digitalRead(pin);
 
     // only record last pressed time when the button state changes
@@ -100,10 +112,19 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
         if (pressed_duration < 500) {
             if (value > 0) {
                 // left button
-                Timer1.start();
+                if (timer.state() == Timer::Pause) {
+                    timer.set_state(timer.state_previous());
+                } else {
+                    timer.set_state(Timer::Pause);
+                }
             } else {
                 // right button
-                Timer1.stop();
+                if (timer.state() == Timer::Work) {
+                    timer.set_state(Timer::BreakShort);
+                } else if (timer.state() == Timer::BreakShort
+                           || timer.state() == Timer::BreakLong) {
+                    timer.set_state(Timer::Work);
+                }
             }
         } else if (pressed_duration >= 500 && pressed_duration < 1000) {
             Timer1.stop();
@@ -114,9 +135,83 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
     }
 }
 
-void loop() {
+void set_rgb_led(int pin, int value)
+{
+    analogWrite(pin, value);
+}
+
+void work_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 255);
+    set_rgb_led(pin::led_statusB, 0);
+}
+
+void break_short_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusB, 255);
+}
+
+void break_long_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusB, 255);
+}
+
+void pause_loop()
+{
+    set_rgb_led(pin::led_statusR, 255);
+    set_rgb_led(pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusB, 0);
+}
+
+void toggle_led(int pin, bool on)
+{
+    digitalWrite(pin, on ? HIGH : LOW);
+}
+
+void toggle_leds(uint8_t count)
+{
+    toggle_led(pin::led_countA, count >= 1);
+    toggle_led(pin::led_countB, count >= 2);
+    toggle_led(pin::led_countC, count >= 3);
+    toggle_led(pin::led_countD, count >= 4);
+}
+
+void loop()
+{
+    // button 1 handler
     debounced_press(pin::in_button1, button1_pressed, button1_pressed_time, button1_last_debounced_time, 1);
+
+    // button 2 handler
     debounced_press(pin::in_button2, button2_pressed, button2_pressed_time, button2_last_debounced_time, -1);
 
-    sevseg.refreshDisplay(); // Must run repeatedly
+    // compiler warns if there is an unhandled enum state
+    switch (timer.state())
+    {
+        case Timer::Work:
+            work_loop();
+            break;
+
+        case Timer::BreakShort:
+            break_short_loop();
+            break;
+
+        case Timer::BreakLong:
+            break_long_loop();
+            break;
+
+        case Timer::Pause:
+            pause_loop();
+            break;
+    }
+
+    // TODO: choose better place to check LEDs?
+    toggle_leds(timer.pomodoro_goal() - timer.pomodoros_completed());
+
+    // must run repeatedly
+    sevseg.refreshDisplay();
 }
