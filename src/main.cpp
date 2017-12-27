@@ -64,6 +64,28 @@ unsigned long button2_pressed_time = 0;
 unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
 
+void to_next_state()
+{
+    switch(timer.state())
+    {
+        case Timer::Work:
+            timer.set_state(timer.pomodoros_completed() < 4 ?
+                Timer::BreakShort :
+                Timer::BreakLong);
+            timer.pomodoro_complete();
+            break;
+
+        // to fix issue when timer loops around back to 4 pomodoros
+        // case Timer::BreakLong:
+        //     timer.reset();
+        //     break;
+
+        // case Timer::BreakShort:
+        default:
+            timer.set_state(Timer::Work);
+    }
+}
+
 // do not mess with memory; keep as short as possible
 void tick() {
     const float time = timer.current_time();
@@ -72,14 +94,7 @@ void tick() {
     }
 
     if (time <= 0) {
-        if (timer.state() == Timer::Work) {
-            timer.set_state(timer.pomodoros_completed() < 4 ?
-                Timer::BreakShort :
-                Timer::BreakLong);
-            timer.pomodoro_complete();
-        } else {
-            timer.set_state(Timer::Work);
-        }
+        to_next_state();
     }
 
     tone(pin::audio_ticker, 330, 5);
