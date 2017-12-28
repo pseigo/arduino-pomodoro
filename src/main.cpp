@@ -67,7 +67,7 @@ unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
 int pause_led_value = 0;
 unsigned long pause_timer = 0;
-int pause_led_pin = 0;
+int pause_led_pin = pin::led_statusG; // system starts in work mode
 bool skip_next_tick = false;
 bool next_state_pending = false;
 
@@ -132,16 +132,14 @@ void pause()
 {
     pause_led_value = 255;
     pause_timer = millis();
+    const bool is_working = timer.state() == Timer::Work;
 
-    set_all_leds(0);
+    // set opposite pins to 0
+    set_rgb_led(is_working ? pin::led_statusB : pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusR, 0);
 
     // select colour of previous state
-    const bool is_working = timer.state() == Timer::Work;
     pause_led_pin = is_working ? pin::led_statusG : pin::led_statusB;
-
-    // set opposite colour to 0
-    // set_rgb_led(is_working ? pin::led_statusB : pin::led_statusG, 0);
-    // set_rgb_led(pin::led_statusR, 0);
 
     timer.set_state(Timer::Pause);
 }
