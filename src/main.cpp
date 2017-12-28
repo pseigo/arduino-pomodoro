@@ -10,6 +10,7 @@ static const int debounceDelay = 50;
 // TEMP: remove these prototypes later when refactoring
 void tick();
 void set_rgb_led(int pin, int value);
+void update_display();
 
 void setup() {
     byte numDigits = 4;
@@ -54,7 +55,7 @@ void setup() {
     digitalWrite(pin::led_countD, HIGH);
 
     // show the timer right away at startup
-    tick();
+    update_display();
 }
 
 Timer timer;
@@ -66,6 +67,7 @@ unsigned long button2_pressed_time = 0;
 unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
 int pause_rgb_value = 0;
+bool skip_next_tick = false;
 
 void work()
 {
@@ -120,8 +122,25 @@ void to_next_state()
     }
 }
 
+void restart_timer()
+{
+    // Timer1.start() immediately calls tick().. so one tick is skipped
+    skip_next_tick = true;
+    Timer1.start();
+}
+
+void update_display()
+{
+    sevseg.setNumber(timer.current_time(), 2);
+}
+
 // tips: do not mess with memory + keep as short as possible
 void tick() {
+    if (skip_next_tick) {
+        skip_next_tick = false;
+        return;
+    }
+
     if (timer.state() == Timer::Pause) {
         return;
     }
@@ -132,8 +151,8 @@ void tick() {
         timer.tick(); // decrement time
     }
 
-    tone(pin::audio_ticker, 330, 5); // play tone
-    sevseg.setNumber(timer.current_time(), 2); // update display
+    tone(pin::audio_ticker, 330, 5);
+    update_display();
 }
 
 void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
@@ -178,7 +197,8 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 }
 
                 // update the display immediately after switching states
-                tick();
+                update_display(); // must be first because..
+                restart_timer();
             }
         // } else if (pressed_duration >= 500 && pressed_duration < 1000) {
         //     // medium press
