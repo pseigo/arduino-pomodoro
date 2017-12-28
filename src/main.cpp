@@ -67,14 +67,41 @@ unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
 int pause_rgb_value = 0;
 
+void work()
+{
+    timer.set_state(Timer::Work);
+}
+
+void break_short()
+{
+    timer.set_state(Timer::BreakShort);
+}
+
+void break_long()
+{
+    timer.set_state(Timer::BreakLong);
+}
+
+void to_next_break()
+{
+    if (timer.pomodoros_completed() < timer.pomodoro_goal()) {
+        break_short();
+    } else {
+        break_long();
+    }
+}
+
+void pause()
+{
+    timer.set_state(Timer::Pause);
+}
+
 void to_next_state()
 {
     switch(timer.state())
     {
         case Timer::Work:
-            timer.set_state(timer.pomodoros_completed() < timer.pomodoro_goal() ?
-                Timer::BreakShort :
-                Timer::BreakLong);
+            to_next_break();
             timer.pomodoro_complete();
             break;
 
@@ -83,8 +110,8 @@ void to_next_state()
             break;
 
         case Timer::BreakShort:
-            timer.set_state(Timer::Work);
-            timer.set_state(Timer::Pause); // start paused
+            work();
+            pause(); // start paused
             break;
 
         // theoretically will never occur due to check inside tick()
@@ -139,15 +166,15 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                     timer.set_state(timer.state_previous());
                 } else {
                     pause_rgb_value = 255; // reset RGB value
-                    timer.set_state(Timer::Pause);
+                    pause();
                 }
             } else {
                 // right button
                 if (timer.state() == Timer::Work) {
-                    timer.set_state(Timer::BreakShort);
+                    break_short();
                 } else if (timer.state() == Timer::BreakShort
                         || timer.state() == Timer::BreakLong) {
-                    timer.set_state(Timer::Work);
+                    work();
                 }
 
                 // update the display immediately after switching states
