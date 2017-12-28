@@ -131,7 +131,8 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
     if (pressed == LOW && pressed_time > 0) {
         int pressed_duration = millis() - pressed_time;
 
-        if (pressed_duration < 500) {
+        // NOTE: LONG PRESSES TEMPORARILY DISABLED
+        if (pressed_duration > 0) {
             if (value > 0) {
                 // left button
                 if (timer.state() == Timer::Pause) {
@@ -152,11 +153,11 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 // update the display immediately after switching states
                 tick();
             }
-        } else if (pressed_duration >= 500 && pressed_duration < 1000) {
-            // medium press
-        } else {
-            // long press
-        }
+        // } else if (pressed_duration >= 500 && pressed_duration < 1000) {
+        //     // medium press
+        // } else {
+        //     // long press
+            }
         pressed_time = 0;
     }
 }
