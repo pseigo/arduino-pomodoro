@@ -59,15 +59,50 @@ void setup() {
 }
 
 Timer timer;
-int count = 0;
 int button1_pressed = LOW;
 int button2_pressed = LOW;
 unsigned long button1_pressed_time = 0;
 unsigned long button2_pressed_time = 0;
 unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
-int pause_rgb_value = 0;
+int pause_led_value = 0;
+unsigned long pause_timer = 0;
+int pause_led_pin = 0;
 bool skip_next_tick = false;
+bool next_state_pending = false;
+
+void set_rgb_led(int pin, int value)
+{
+    analogWrite(pin, value);
+}
+
+void set_all_leds(int value)
+{
+    set_rgb_led(pin::led_statusR, value);
+    set_rgb_led(pin::led_statusG, value);
+    set_rgb_led(pin::led_statusB, value);
+}
+
+void work_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 255);
+    set_rgb_led(pin::led_statusB, 0);
+}
+
+void break_short_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusB, 255);
+}
+
+void break_long_loop()
+{
+    set_rgb_led(pin::led_statusR, 0);
+    set_rgb_led(pin::led_statusG, 0);
+    set_rgb_led(pin::led_statusB, 255);
+}
 
 void work()
 {
@@ -95,6 +130,19 @@ void to_next_break()
 
 void pause()
 {
+    pause_led_value = 255;
+    pause_timer = millis();
+
+    set_all_leds(0);
+
+    // select colour of previous state
+    const bool is_working = timer.state() == Timer::Work;
+    pause_led_pin = is_working ? pin::led_statusG : pin::led_statusB;
+
+    // set opposite colour to 0
+    // set_rgb_led(is_working ? pin::led_statusB : pin::led_statusG, 0);
+    // set_rgb_led(pin::led_statusR, 0);
+
     timer.set_state(Timer::Pause);
 }
 
@@ -134,26 +182,6 @@ void update_display()
     sevseg.setNumber(timer.current_time(), 2);
 }
 
-// tips: do not mess with memory + keep as short as possible
-void tick() {
-    if (skip_next_tick) {
-        skip_next_tick = false;
-        return;
-    }
-
-    if (timer.state() == Timer::Pause) {
-        return;
-    }
-
-    if (timer.current_time() <= 0) {
-        to_next_state();
-    } else {
-        timer.tick(); // decrement time
-    }
-
-    tone(pin::audio_ticker, 330, 5);
-    update_display();
-}
 
 void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
 {
@@ -184,7 +212,6 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 if (timer.state() == Timer::Pause) {
                     timer.set_state(timer.state_previous());
                 } else {
-                    pause_rgb_value = 255; // reset RGB value
                     pause();
                 }
             } else {
@@ -209,64 +236,20 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
     }
 }
 
-void set_rgb_led(int pin, int value)
-{
-    analogWrite(pin, value);
-}
-
-void work_loop()
-{
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 255);
-    set_rgb_led(pin::led_statusB, 0);
-}
-
-void break_short_loop()
-{
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusB, 255);
-}
-
-void break_long_loop()
-{
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusB, 255);
-}
-
 void pause_loop()
 {
-    // select colour of previous state
-    const int pin = timer.state_previous() == Timer::Work ?
-        pin::led_statusG : pin::led_statusB;
-
-    // set opposite colour to 0
-    set_rgb_led(timer.state_previous() == Timer::Work ?
-        pin::led_statusB : pin::led_statusG, 0);
-
-    static unsigned long timer = millis();
-    static int deci_seconds = 0;
-    static const int delay_time = 5;
+    static const int DELAY_TIME = 5;
     static int step = 1;
 
-    if (millis() - timer >= delay_time) {
-        timer += delay_time;
+    if (millis() - pause_timer >= DELAY_TIME) {
+        pause_timer = millis();
 
-        // equal to 100 ms
-        ++deci_seconds;
+        pause_led_value += step;
+        set_rgb_led(pause_led_pin, pause_led_value);
 
-        // reset to 0 after counting for 10000 deciseconds
-        if (deci_seconds >= 10000) {
-            deci_seconds = 0;
-        }
-
-        pause_rgb_value += step;
-        set_rgb_led(pin, pause_rgb_value);
-
-        if (pause_rgb_value >= 255) {
+        if (pause_led_value >= 255) {
             step = -1;
-        } else if (pause_rgb_value <= 0) {
+        } else if (pause_led_value <= 0) {
             step = 1;
         }
     }
@@ -285,6 +268,27 @@ void toggle_leds(uint8_t count)
     toggle_led(pin::led_countD, count >= 4);
 }
 
+// tips: do not mess with memory + keep as short as possible
+void tick() {
+    if (skip_next_tick) {
+        skip_next_tick = false;
+        return;
+    }
+
+    if (timer.state() == Timer::Pause) {
+        return;
+    }
+
+    if (timer.current_time() <= 0) {
+        next_state_pending = true;
+    } else {
+        timer.tick(); // decrement time
+    }
+
+    tone(pin::audio_ticker, 330, 5);
+    update_display();
+}
+
 void loop()
 {
     // button 1 handler
@@ -292,6 +296,11 @@ void loop()
 
     // button 2 handler
     debounced_press(pin::in_button2, button2_pressed, button2_pressed_time, button2_last_debounced_time, -1);
+
+    if (next_state_pending) {
+        to_next_state();
+        next_state_pending = false;
+    }
 
     // compiler warns if there is an unhandled enum state
     switch (timer.state())
