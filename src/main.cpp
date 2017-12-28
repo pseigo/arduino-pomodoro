@@ -81,6 +81,7 @@ void to_next_state()
 
         case Timer::BreakShort:
             timer.set_state(Timer::Work);
+            timer.set_state(Timer::Pause); // start paused
             break;
 
         // theoretically will never occur due to check inside tick()
@@ -91,11 +92,11 @@ void to_next_state()
 
 // tips: do not mess with memory + keep as short as possible
 void tick() {
-    const float time = timer.current_time();
     if (timer.state() == Timer::Pause) {
         return;
     }
 
+    const float time = timer.current_time();
     if (time <= 0) {
         to_next_state();
     }

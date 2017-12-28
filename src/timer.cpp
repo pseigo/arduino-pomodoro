@@ -16,6 +16,7 @@ void Timer::reset()
 {
     m_pomodoros_completed = 0;
     set_state(Work);
+    set_state(Pause); // start paused
 }
 
 // getters
