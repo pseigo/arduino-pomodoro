@@ -16,11 +16,12 @@ public:
     void reset();
 
     // getters
+    float current_time() const;
     int pomodoro_goal() const;
     int pomodoros_completed() const;
+    bool sound_tick() const;
     State state() const;
     State state_previous() const;
-    float current_time() const;
 
     // modifiers
     void pomodoro_complete();

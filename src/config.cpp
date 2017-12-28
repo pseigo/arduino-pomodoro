@@ -18,6 +18,8 @@ void Config::reset()
     m_break_long_length = 10; // 60 * 10;
 
     m_pomodoro_goal = 4;
+
+    m_sound_tick = true;
 }
 
 // getters
@@ -39,6 +41,11 @@ int Config::break_long_length() const
 int Config::pomodoro_goal() const
 {
     return m_pomodoro_goal;
+}
+
+bool Config::sound_tick() const
+{
+    return m_sound_tick;
 }
 
 // modifiers

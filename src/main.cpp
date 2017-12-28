@@ -283,7 +283,9 @@ void tick() {
         timer.tick(); // decrement time
     }
 
-    tone(pin::audio_ticker, 330, 5);
+    if (timer.sound_tick()) {
+        tone(pin::audio_ticker, 330, 5);
+    }
     update_display();
 }
 

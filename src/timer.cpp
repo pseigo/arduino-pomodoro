@@ -20,6 +20,13 @@ void Timer::reset()
 }
 
 // getters
+float Timer::current_time() const
+{
+    const int minutes = m_seconds / 60;
+    const int seconds = m_seconds % 60;
+    return minutes + seconds/100.0;
+}
+
 int Timer::pomodoro_goal() const
 {
     return m_config.pomodoro_goal();
@@ -30,6 +37,11 @@ int Timer::pomodoros_completed() const
     return m_pomodoros_completed;
 }
 
+bool Timer::sound_tick() const
+{
+    return m_config.sound_tick();
+}
+
 Timer::State Timer::state() const
 {
     return m_state;
@@ -38,13 +50,6 @@ Timer::State Timer::state() const
 Timer::State Timer::state_previous() const
 {
     return m_state_previous;
-}
-
-float Timer::current_time() const
-{
-    const int minutes = m_seconds / 60;
-    const int seconds = m_seconds % 60;
-    return minutes + seconds/100.0;
 }
 
 // modifiers
