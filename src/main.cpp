@@ -126,14 +126,14 @@ void tick() {
         return;
     }
 
-    const float time = timer.current_time();
-    if (time <= 0) {
+    if (timer.current_time() <= 0) {
         to_next_state();
+    } else {
+        timer.tick(); // decrement time
     }
 
     tone(pin::audio_ticker, 330, 5); // play tone
-    timer.tick(); // decrement time
-    sevseg.setNumber(time, 2); // update display
+    sevseg.setNumber(timer.current_time(), 2); // update display
 }
 
 void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
