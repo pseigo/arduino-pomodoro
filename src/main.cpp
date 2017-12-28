@@ -50,6 +50,9 @@ void setup() {
     digitalWrite(pin::led_countB, HIGH);
     digitalWrite(pin::led_countC, HIGH);
     digitalWrite(pin::led_countD, HIGH);
+
+    // show the timer right away at startup
+    tick();
 }
 
 Timer timer;
