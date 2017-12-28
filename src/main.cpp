@@ -145,9 +145,9 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 tick();
             }
         } else if (pressed_duration >= 500 && pressed_duration < 1000) {
-            Timer1.stop();
+            // medium press
         } else {
-            Timer1.stop();
+            // long press
         }
         pressed_time = 0;
     }
