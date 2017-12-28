@@ -58,11 +58,6 @@ void Timer::pomodoro_complete()
     } else {
         set_state(BreakLong);
     }
-
-    // // completed  goal  pomodoros, so reset completed back to 0
-    // if (m_pomodoros_completed > goal) {
-    //     m_pomodoros_completed = 0;
-    // }
 }
 
 void Timer::set_state(Timer::State state)

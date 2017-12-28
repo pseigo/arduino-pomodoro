@@ -66,7 +66,7 @@ void to_next_state()
     switch(timer.state())
     {
         case Timer::Work:
-            timer.set_state(timer.pomodoros_completed() < 4 ?
+            timer.set_state(timer.pomodoros_completed() < timer.pomodoro_goal() ?
                 Timer::BreakShort :
                 Timer::BreakLong);
             timer.pomodoro_complete();
@@ -80,10 +80,10 @@ void to_next_state()
             timer.set_state(Timer::Work);
             break;
 
+        // theoretically will never occur due to check inside tick()
         case Timer::Pause:
             break;
     }
-
 }
 
 // tips: do not mess with memory + keep as short as possible
@@ -137,9 +137,12 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 if (timer.state() == Timer::Work) {
                     timer.set_state(Timer::BreakShort);
                 } else if (timer.state() == Timer::BreakShort
-                           || timer.state() == Timer::BreakLong) {
+                        || timer.state() == Timer::BreakLong) {
                     timer.set_state(Timer::Work);
                 }
+
+                // update the display immediately after switching states
+                tick();
             }
         } else if (pressed_duration >= 500 && pressed_duration < 1000) {
             Timer1.stop();
