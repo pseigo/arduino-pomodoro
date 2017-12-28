@@ -7,7 +7,9 @@
 SevSeg sevseg; // instantiate a seven segment object
 static const int debounceDelay = 50;
 
+// TEMP: remove these prototypes later when refactoring
 void tick();
+void set_rgb_led(int pin, int value);
 
 void setup() {
     byte numDigits = 4;
@@ -63,6 +65,7 @@ unsigned long button1_pressed_time = 0;
 unsigned long button2_pressed_time = 0;
 unsigned long button1_last_debounced_time = 0;
 unsigned long button2_last_debounced_time = 0;
+int pause_rgb_value = 0;
 
 void to_next_state()
 {
@@ -134,6 +137,7 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
                 if (timer.state() == Timer::Pause) {
                     timer.set_state(timer.state_previous());
                 } else {
+                    pause_rgb_value = 255; // reset RGB value
                     timer.set_state(Timer::Pause);
                 }
             } else {
@@ -185,9 +189,39 @@ void break_long_loop()
 
 void pause_loop()
 {
-    set_rgb_led(pin::led_statusR, 255);
-    set_rgb_led(pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusB, 0);
+    // select colour of previous state
+    const int pin = timer.state_previous() == Timer::Work ?
+        pin::led_statusG : pin::led_statusB;
+
+    // set opposite colour to 0
+    set_rgb_led(timer.state_previous() == Timer::Work ?
+        pin::led_statusB : pin::led_statusG, 0);
+
+    static unsigned long timer = millis();
+    static int deci_seconds = 0;
+    static const int delay_time = 5;
+    static int step = 1;
+
+    if (millis() - timer >= delay_time) {
+        timer += delay_time;
+
+        // equal to 100 ms
+        ++deci_seconds;
+
+        // reset to 0 after counting for 10000 deciseconds
+        if (deci_seconds >= 10000) {
+            deci_seconds = 0;
+        }
+
+        pause_rgb_value += step;
+        set_rgb_led(pin, pause_rgb_value);
+
+        if (pause_rgb_value >= 255) {
+            step = -1;
+        } else if (pause_rgb_value <= 0) {
+            step = 1;
+        }
+    }
 }
 
 void toggle_led(int pin, bool on)
