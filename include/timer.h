@@ -13,6 +13,7 @@ public:
 
     Timer();
     ~Timer();
+    void reset();
 
     // getters
     int pomodoro_goal() const;
@@ -28,8 +29,6 @@ public:
     void tick();
 
 private:
-    void reset();
-
     State m_state;
     State m_state_previous; // to return from Pause state
     Config m_config;

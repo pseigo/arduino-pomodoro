@@ -10,9 +10,6 @@ static const int debounceDelay = 50;
 void tick();
 
 void setup() {
-    Serial.begin(115200);
-    Serial.println("Console setup complete.");
-
     byte numDigits = 4;
     byte digitPins[] = {
         pin::disp_digit1,
@@ -75,18 +72,21 @@ void to_next_state()
             timer.pomodoro_complete();
             break;
 
-        // to fix issue when timer loops around back to 4 pomodoros
-        // case Timer::BreakLong:
-        //     timer.reset();
-        //     break;
+        case Timer::BreakLong:
+            timer.reset();
+            break;
 
-        // case Timer::BreakShort:
-        default:
+        case Timer::BreakShort:
             timer.set_state(Timer::Work);
+            break;
+
+        case Timer::Pause:
+            break;
     }
+
 }
 
-// do not mess with memory; keep as short as possible
+// tips: do not mess with memory + keep as short as possible
 void tick() {
     const float time = timer.current_time();
     if (timer.state() == Timer::Pause) {
@@ -97,9 +97,9 @@ void tick() {
         to_next_state();
     }
 
-    tone(pin::audio_ticker, 330, 5);
-    timer.tick();
-    sevseg.setNumber(time, 2);
+    tone(pin::audio_ticker, 330, 5); // play tone
+    timer.tick(); // decrement time
+    sevseg.setNumber(time, 2); // update display
 }
 
 void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
