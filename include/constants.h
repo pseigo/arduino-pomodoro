@@ -1,4 +1,10 @@
 #pragma once
+
+#include <Arduino.h>
+
+// debounce
+static const byte debounce_threshold = 50;
+
 namespace pin {
     // display
     static const byte disp_digit1 = 22;
@@ -30,4 +36,5 @@ namespace pin {
 
     // audio
     static const byte audio_ticker = 5;
+
 }
