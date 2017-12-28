@@ -43,8 +43,8 @@ Timer::State Timer::state_previous() const
 float Timer::current_time() const
 {
     const int minutes = m_seconds / 60;
-    const int seconds_difference = m_seconds - minutes*60;
-    return minutes + seconds_difference/100.0;
+    const int seconds = m_seconds % 60;
+    return minutes + seconds/100.0;
 }
 
 // modifiers
