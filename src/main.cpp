@@ -4,23 +4,46 @@
 #include "SevSeg.h"
 #include "TimerOne.h"
 
-SevSeg sevseg; // instantiate a seven segment object
-static const int debounceDelay = 50;
+// objects
+SevSeg sevseg; // seven segment object for display
+Timer timer; // pomodoro timer
 
-// TEMP: remove these prototypes later when refactoring
+// button debounce
+int button1_pressed = LOW;
+int button2_pressed = LOW;
+unsigned long button1_pressed_time = 0;
+unsigned long button2_pressed_time = 0;
+unsigned long button1_last_debounced_time = 0;
+unsigned long button2_last_debounced_time = 0;
+static const int debounce_threshold = 50;
+
+// pause loop
+byte pause_led_pin = pin::led_statusG; // system starts in work mode
+byte pause_led_value = 0;
+unsigned long pause_timer = 0;
+
+// state switching
+bool next_state_pending = false; // cue for next state
+bool skip_next_tick = false;
+
+// prototypes
 void tick();
-void set_rgb_led(int pin, int value);
-void update_display();
+void update_pomodoro_leds();
+void set_all_leds_pwm(int value);
 
-void setup() {
-    byte numDigits = 4;
-    byte digitPins[] = {
+void setup_display()
+{
+    byte hardware_config = COMMON_CATHODE; // See README.md for options
+    byte num_digits = 4;
+    bool resistors_on_segments = false; // 'false' means resistors are on digit pins
+
+    byte digit_pins[] = {
         pin::disp_digit1,
         pin::disp_digit2,
         pin::disp_digit3,
         pin::disp_digit4
     };
-    byte segmentPins[] = {
+    byte segment_pins[] = {
         pin::disp_segA,
         pin::disp_segB,
         pin::disp_segC,
@@ -30,15 +53,17 @@ void setup() {
         pin::disp_segG,
         pin::disp_segP
     };
-    bool resistorsOnSegments = false; // 'false' means resistors are on digit pins
-    byte hardwareConfig = COMMON_CATHODE; // See README.md for options
-    sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins, resistorsOnSegments);
 
-    Timer1.initialize();
-    Timer1.attachInterrupt(tick);
+    sevseg.begin(hardware_config, num_digits, digit_pins, segment_pins, resistors_on_segments);
+}
 
+void setup_pins()
+{
+    // inputs
     pinMode(pin::in_button1, INPUT);
     pinMode(pin::in_button2, INPUT);
+
+    // outputs
     pinMode(pin::led_statusR, OUTPUT);
     pinMode(pin::led_statusG, OUTPUT);
     pinMode(pin::led_statusB, OUTPUT);
@@ -47,63 +72,106 @@ void setup() {
     pinMode(pin::led_countB, OUTPUT);
     pinMode(pin::led_countC, OUTPUT);
     pinMode(pin::led_countD, OUTPUT);
-
-    // TEMP
-    digitalWrite(pin::led_countA, HIGH);
-    digitalWrite(pin::led_countB, HIGH);
-    digitalWrite(pin::led_countC, HIGH);
-    digitalWrite(pin::led_countD, HIGH);
-
-    // show the timer right away at startup
-    update_display();
 }
 
-Timer timer;
-int button1_pressed = LOW;
-int button2_pressed = LOW;
-unsigned long button1_pressed_time = 0;
-unsigned long button2_pressed_time = 0;
-unsigned long button1_last_debounced_time = 0;
-unsigned long button2_last_debounced_time = 0;
-int pause_led_value = 0;
-unsigned long pause_timer = 0;
-int pause_led_pin = pin::led_statusG; // system starts in work mode
-bool skip_next_tick = false;
-bool next_state_pending = false;
+void setup_indicators()
+{
+    update_pomodoro_leds();
+    set_all_leds_pwm(0);
+}
 
-void set_rgb_led(int pin, int value)
+void setup_timer()
+{
+    Timer1.initialize();
+    Timer1.attachInterrupt(tick);
+}
+
+void restart_timer()
+{
+    // Timer1.start() immediately calls tick(), causing some timers to 'lose' a second
+    skip_next_tick = true;
+    Timer1.start();
+}
+
+void update_display()
+{
+    sevseg.setNumber(timer.current_time(), 2);
+}
+
+// LED modifiers
+void set_led_pwm(byte pin, int value)
 {
     analogWrite(pin, value);
 }
 
-void set_all_leds(int value)
+void set_all_leds_pwm(int value)
 {
-    set_rgb_led(pin::led_statusR, value);
-    set_rgb_led(pin::led_statusG, value);
-    set_rgb_led(pin::led_statusB, value);
+    set_led_pwm(pin::led_statusR, value);
+    set_led_pwm(pin::led_statusG, value);
+    set_led_pwm(pin::led_statusB, value);
 }
 
+void toggle_led(byte pin, bool on)
+{
+    digitalWrite(pin, on ? HIGH : LOW);
+}
+
+void toggle_leds(uint8_t count)
+{
+    toggle_led(pin::led_countA, count >= 1);
+    toggle_led(pin::led_countB, count >= 2);
+    toggle_led(pin::led_countC, count >= 3);
+    toggle_led(pin::led_countD, count >= 4);
+}
+
+void update_pomodoro_leds()
+{
+    // toggle # of leds according to Pomodoros completed
+    toggle_leds(timer.pomodoro_goal() - timer.pomodoros_completed());
+}
+
+// indicator LED loops
 void work_loop()
 {
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 255);
-    set_rgb_led(pin::led_statusB, 0);
+    set_led_pwm(pin::led_statusR, 0);
+    set_led_pwm(pin::led_statusG, 255);
+    set_led_pwm(pin::led_statusB, 0);
 }
 
 void break_short_loop()
 {
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusB, 255);
+    set_led_pwm(pin::led_statusR, 0);
+    set_led_pwm(pin::led_statusG, 0);
+    set_led_pwm(pin::led_statusB, 255);
 }
 
 void break_long_loop()
 {
-    set_rgb_led(pin::led_statusR, 0);
-    set_rgb_led(pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusB, 255);
+    set_led_pwm(pin::led_statusR, 0);
+    set_led_pwm(pin::led_statusG, 0);
+    set_led_pwm(pin::led_statusB, 255);
 }
 
+void pause_loop()
+{
+    static const int DELAY_TIME = 5;
+    static int8_t step = 1;
+
+    if (millis() - pause_timer >= DELAY_TIME) {
+        pause_timer = millis();
+
+        pause_led_value += step;
+        set_led_pwm(pause_led_pin, pause_led_value);
+
+        if (pause_led_value == 255) {
+            step = -1;
+        } else if (pause_led_value == 0) {
+            step = 1;
+        }
+    }
+}
+
+// timer state modifiers
 void work()
 {
     timer.set_state(Timer::Work);
@@ -119,6 +187,7 @@ void break_long()
     timer.set_state(Timer::BreakLong);
 }
 
+// sets appropriate break state depending on number of pomodoros completed
 void to_next_break()
 {
     if (timer.pomodoros_completed() < timer.pomodoro_goal()) {
@@ -135,15 +204,16 @@ void pause()
     const bool is_working = timer.state() == Timer::Work;
 
     // set opposite pins to 0
-    set_rgb_led(is_working ? pin::led_statusB : pin::led_statusG, 0);
-    set_rgb_led(pin::led_statusR, 0);
+    set_led_pwm(is_working ? pin::led_statusB : pin::led_statusG, 0);
+    set_led_pwm(pin::led_statusR, 0);
 
-    // select colour of previous state
+    // pulse colour of previous state
     pause_led_pin = is_working ? pin::led_statusG : pin::led_statusB;
 
     timer.set_state(Timer::Pause);
 }
 
+// handles automatic switching of states
 void to_next_state()
 {
     switch(timer.state())
@@ -151,10 +221,12 @@ void to_next_state()
         case Timer::Work:
             to_next_break();
             timer.pomodoro_complete();
+            update_pomodoro_leds();
             break;
 
         case Timer::BreakLong:
             timer.reset();
+            setup_indicators();
             break;
 
         case Timer::BreakShort:
@@ -166,24 +238,36 @@ void to_next_state()
         case Timer::Pause:
             break;
     }
+
+    update_display();
 }
 
-void restart_timer()
+void toggle_pause()
 {
-    // Timer1.start() immediately calls tick().. so one tick is skipped
-    skip_next_tick = true;
-    Timer1.start();
+    if (timer.state() == Timer::Pause) {
+        timer.set_state(timer.state_previous());
+    } else {
+        pause();
+    }
 }
 
-void update_display()
+void toggle_break()
 {
-    sevseg.setNumber(timer.current_time(), 2);
+    if (timer.state() == Timer::Work) {
+        break_short();
+    } else if (timer.state() == Timer::BreakShort
+            || timer.state() == Timer::BreakLong) {
+        work();
+    }
+
+    // update the display immediately after switching states
+    update_display();
+    restart_timer();
 }
 
-
-void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time, int value)
+void debounced_press(byte pin, int& pressed, unsigned long& pressed_time, unsigned long& last_debounced_time)
 {
-    const int reading = digitalRead(pin);
+    const byte reading = digitalRead(pin);
 
     // only record last pressed time when the button state changes
     if (reading != pressed) {
@@ -196,78 +280,29 @@ void debounced_press(int pin, int& pressed, unsigned long& pressed_time, unsigne
         pressed = reading;
     }
 
-    if (millis() - last_debounced_time < debounceDelay) {
+    // filter out presses shorter than threshold
+    if (millis() - last_debounced_time < debounce_threshold) {
         return;
     }
 
     if (pressed == LOW && pressed_time > 0) {
-        int pressed_duration = millis() - pressed_time;
+        const int pressed_duration = millis() - pressed_time;
 
         // NOTE: LONG PRESSES TEMPORARILY DISABLED
         if (pressed_duration > 0) {
-            if (value > 0) {
-                // left button
-                if (timer.state() == Timer::Pause) {
-                    timer.set_state(timer.state_previous());
-                } else {
-                    pause();
-                }
+            if (pin == pin::in_button1) {
+                toggle_pause();
             } else {
-                // right button
-                if (timer.state() == Timer::Work) {
-                    break_short();
-                } else if (timer.state() == Timer::BreakShort
-                        || timer.state() == Timer::BreakLong) {
-                    work();
-                }
-
-                // update the display immediately after switching states
-                update_display(); // must be first because..
-                restart_timer();
+                toggle_break();
             }
-        // } else if (pressed_duration >= 500 && pressed_duration < 1000) {
-        //     // medium press
-        // } else {
-        //     // long press
-            }
+        }
         pressed_time = 0;
     }
 }
 
-void pause_loop()
-{
-    static const int DELAY_TIME = 5;
-    static int step = 1;
-
-    if (millis() - pause_timer >= DELAY_TIME) {
-        pause_timer = millis();
-
-        pause_led_value += step;
-        set_rgb_led(pause_led_pin, pause_led_value);
-
-        if (pause_led_value >= 255) {
-            step = -1;
-        } else if (pause_led_value <= 0) {
-            step = 1;
-        }
-    }
-}
-
-void toggle_led(int pin, bool on)
-{
-    digitalWrite(pin, on ? HIGH : LOW);
-}
-
-void toggle_leds(uint8_t count)
-{
-    toggle_led(pin::led_countA, count >= 1);
-    toggle_led(pin::led_countB, count >= 2);
-    toggle_led(pin::led_countC, count >= 3);
-    toggle_led(pin::led_countD, count >= 4);
-}
-
 // tips: do not mess with memory + keep as short as possible
-void tick() {
+void tick()
+{
     if (skip_next_tick) {
         skip_next_tick = false;
         return;
@@ -278,6 +313,7 @@ void tick() {
     }
 
     if (timer.current_time() <= 0) {
+        // flag so that hardware interrupt does not directly perform intensive tasks
         next_state_pending = true;
     } else {
         timer.tick(); // decrement time
@@ -289,20 +325,30 @@ void tick() {
     update_display();
 }
 
+void setup()
+{
+    setup_display();
+    setup_pins();
+    setup_timer();
+
+    setup_indicators();
+    // show the time immediately at startup
+    update_display();
+}
+
 void loop()
 {
     // button 1 handler
-    debounced_press(pin::in_button1, button1_pressed, button1_pressed_time, button1_last_debounced_time, 1);
+    debounced_press(pin::in_button1, button1_pressed, button1_pressed_time, button1_last_debounced_time);
 
     // button 2 handler
-    debounced_press(pin::in_button2, button2_pressed, button2_pressed_time, button2_last_debounced_time, -1);
+    debounced_press(pin::in_button2, button2_pressed, button2_pressed_time, button2_last_debounced_time);
 
     if (next_state_pending) {
         to_next_state();
         next_state_pending = false;
     }
 
-    // compiler warns if there is an unhandled enum state
     switch (timer.state())
     {
         case Timer::Work:
@@ -321,9 +367,6 @@ void loop()
             pause_loop();
             break;
     }
-
-    // TODO: choose better place to check LEDs?
-    toggle_leds(timer.pomodoro_goal() - timer.pomodoros_completed());
 
     // must run repeatedly
     sevseg.refreshDisplay();
