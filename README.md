@@ -14,11 +14,11 @@ The key principles that make this method so effective are as follows:
 - Completing a *pomodoro* should feel rewarding
 - Eliminating distractions to achieve *focus* and *flow*
 
-*Note: Lengths for the work and break periods for my project are completely customizable in `src/Config.cpp`.*
+*Note: Lengths for the work and break periods for my project are completely customizable in `src/config.cpp`.*
 
 # What did I get out of this project?
 - An introduction to the world of electronics!
-- Issues on GitHub are very useful
+- Using issues on GitHub
 - The importance of optimizing for limited hardware
 - The fundamentals of circuits
   - Visualizing current
