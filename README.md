@@ -24,6 +24,7 @@ The key principles that make this method so effective are as follows:
   - Visualizing current
   - Cathodes and anodes—their significance
   - Resistors—why they're so important
+  - Transistors
   - Capacitors—for switch debouncing, although I ended up doing it in software
   - Light-emitting diodes (LED)
 - Techniques for interacting with hardware
