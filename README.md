@@ -32,7 +32,7 @@ The key principles that make this method so effective are as follows:
   - Pulse-width modulation (PWM)
   - Common-cathode and common-anode in the context of segmented LCD displays
   - Wrapping my mind around the idea of a constantly looping program
-  - Managing state
+  - Managing state with enumerations
 - An introduction to and application of the software development life cycle
   - Proof of concept
   - Hardware prototype
