@@ -75,7 +75,9 @@ After completing a *pomodoro*, the short break state will automatically begin. I
 
 # Media
 ## Video
-*Check back in a few days. :)*
+[![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+
+[https://www.youtube.com/watch?v=Qk93Z4uxi0s](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
 
 ## Images
 ### Electrical circuit diagram
