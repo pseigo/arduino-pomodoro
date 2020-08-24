@@ -1,56 +1,14 @@
 # arduino-pomodoro
-A Pomodoro timer built for Arduino.
+A Pomodoro study timer built using an Arduino.
 
-# Background
-For the final project of my Computer Science 3 High School course, we were given the freedom of developing any project related to the course. I decided to build a study timer for the Arduino microcontroller; specifically, for a spare Freaduino Arduino Mega 2560. This was my first experience with assembling a hardware project as well as writing embedded software.
-
-## The Pomodoro Technique
-The Pomodoro Technique is simple, yet effective. The idea is to break down work into intervals with short breaks in between. The work intervals are often referred to as *pomodoros*. Typically, each *pomodoro* is 25 minutes in length. You start the timer and work on a **single** task for the entire duration. Once the timer finishes, you stop working and take a short 3 to 5 minute break. This process is repeated up to 4 times, at which point you take a long break between 15 and 30 minutes and reset the count to zero.
-
-In addition, *pomodoros* are indivisible. If a *pomodoro* is interrupted, it must be abandoned. The purpose of this is to reduce and eliminate internal and external distractions and to ultimately work with 100% focus.
-
-The key principles that make this method so effective are as follows:
-- Work on one specific task
-- Completing a *pomodoro* should feel rewarding
-- Eliminating distractions to achieve *focus* and *flow*
-
-*Note: Lengths for the work and break periods for my project are completely customizable in `src/config.cpp`.*
-
-# What did I get out of this project?
-- An introduction to the world of electronics!
-- Using issues on GitHub
-- The importance of optimizing for limited hardware
-- The fundamentals of circuits
-  - Visualizing current
-  - Cathodes and anodes—their significance
-  - Resistors—why they're so important
-  - Transistors
-  - Capacitors—for switch debouncing, although I ended up doing it in software
-  - Light-emitting diodes (LED)
-- Techniques for interacting with hardware
-  - The idea of *high* and *low* states
-  - Pulse-width modulation (PWM)
-  - Common-cathode and common-anode in the context of segmented LCD displays
-  - Wrapping my mind around the idea of a constantly looping program
-  - Managing state with enumerations
-- An introduction to and application of the software development life cycle
-  - Proof of concept
-  - Hardware prototype
-  - Software prototype
-  - Testing
-  - Debugging
-  - Finalizing/polishing
+**[Read a detailed write-up of this project at my website! (peytonseigo.ca)](https://peytonseigo.ca/arduino-study-timer/)**
 
 # Libraries
 I used several libraries which were installed using the PlatformIO IDE:
+
 - The official Arduino library
 - [SevSeg *by Dean Reading*](http://platformio.org/lib/show/1372/SevSeg)—for the 7 segment LCD dispay
 - [TimerOne](http://platformio.org/lib/show/131/TimerOne)—to utilize the Arduino's hardware timer for precise "ticks"
-
-# Struggles
-The most challenging part of this project was (is) fixing strange bugs and making final changes. However, this is arguably the most important stage as it takes the project from feeling unstable to well-polished.
-
-I learned a lot and look forward to building my next Arduino project! The next steps include either printing a PCB or manually wiring and soldering the components on a stripboard.
 
 # Usage
 ## Text explanation
