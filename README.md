@@ -1,17 +1,21 @@
 # arduino-pomodoro
+
+[![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+
 A Pomodoro study timer built using an Arduino.
 
 **[Read a detailed write-up of this project at my website! (peytonseigo.ca)](https://peytonseigo.ca/arduino-study-timer/)**
 
-# Libraries
+## Libraries
+
 I used several libraries which were installed using the PlatformIO IDE:
 
 - The official Arduino library
 - [SevSeg *by Dean Reading*](http://platformio.org/lib/show/1372/SevSeg)—for the 7 segment LCD dispay
 - [TimerOne](http://platformio.org/lib/show/131/TimerOne)—to utilize the Arduino's hardware timer for precise "ticks"
 
-# Usage
-## Text explanation
+## Usage
+
 **Indicator LED!**
 The RGB LED indicates which state you are in.
 - *Solid green*: working
@@ -31,16 +35,15 @@ The right button manually changes between work and break states. The timer will 
 **Give me a break!**
 After completing a *pomodoro*, the short break state will automatically begin. If four *pomodoros* have been completed, a long break state will begin.
 
-# Media
-## Video
-[![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+## Media
 
-[https://www.youtube.com/watch?v=Qk93Z4uxi0s](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+📽 **Watch on YouTube**: [https://www.youtube.com/watch?v=Qk93Z4uxi0s](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
 
-## Images
 ### Electrical circuit diagram
+
 ![electrical circuit diagram](https://i.imgur.com/NIzQO4M.png)
 *[full size image!](https://i.imgur.com/NIzQO4M.png)*
 
 ### Prototype
+
 ![photo of timer](https://i.imgur.com/5Wle0Sk.jpg)
