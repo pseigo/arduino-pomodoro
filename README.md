@@ -1,4 +1,4 @@
-# arduino-pomodoro
+# Arduino Study Timer
 
 [![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
 
