@@ -1,41 +1,39 @@
 # Arduino Study Timer
 
-[![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+![YouTube: Arduino Pomodoro Study Timer](https://i.imgur.com/uFG53Cp.jpg)
 
-A Pomodoro study timer built using an Arduino.
+for use as a pomodoro study timer.
 
 ## Libraries
 
-I used several libraries which were installed using the PlatformIO IDE:
-
 - The official Arduino library
-- [SevSeg *by Dean Reading*](http://platformio.org/lib/show/1372/SevSeg)—for the 7 segment LCD dispay
-- [TimerOne](http://platformio.org/lib/show/131/TimerOne)—to utilize the Arduino's hardware timer for precise "ticks"
+- [SevSeg *by Dean Reading*](https://platformio.org/lib/show/1372/SevSeg) (7 segment LCD dispay)
+- [TimerOne](https://platformio.org/lib/show/131/TimerOne) (timed hardware interrupts)
+
+(I installed these with the PlatformIO IDE)
 
 ## Usage
 
-**Indicator LED!**
-The RGB LED indicates which state you are in.
-- *Solid green*: working
-- *Strobe green*: working, but paused
-- *Solid blue*: on a break
-- *Strobe blue*: on a break, but paused
+**Indicator LEDs**
 
-**Keeping track of how many *pomodoros* have been completed!**
-Four yellow LEDs indicate how many *pomodoros* are left to complete before a long break. After completing a *pomodoro*, an LED is turned off. Once all four *pomodoros* have been completed, the LEDs will reset.
+RGB LED:
 
-**Pause and unpause states!**
-Each work period begins in a pause state. The left push button pauses and unpauses the timer, as indicated by the indicator LED.
+- *Green*: working
+- *Blue*: having a break
+- *Strobing*: paused
 
-**Manually changing work/break states!**
-The right button manually changes between work and break states. The timer will be reset to its configured value.
+Four yellow LEDs indicate how many work periods are left to complete before a long break. An extinguished LED indicates a completed work period. When all work periods are complete, the LEDs turn back on.
 
-**Give me a break!**
-After completing a *pomodoro*, the short break state will automatically begin. If four *pomodoros* have been completed, a long break state will begin.
+**How to start**
+Work periods begin paused. The timer may be (un)paused with the left push button.
 
-## Media
+If one of \[1, N\)th work periods completes, a short break begins.
 
-📽 **Watch on YouTube**: [https://www.youtube.com/watch?v=Qk93Z4uxi0s](https://www.youtube.com/watch?v=Qk93Z4uxi0s)
+If the Nth work period completes, a long break begins.
+
+In this case, N is 4.
+
+The right button manually changes between work and break states. The timer will be reset.
 
 ### Electrical circuit diagram
 
