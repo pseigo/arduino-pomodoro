@@ -4,8 +4,6 @@
 
 A Pomodoro study timer built using an Arduino.
 
-**[Read a detailed write-up of this project at my website! (peytonseigo.ca)](https://peytonseigo.ca/arduino-study-timer/)**
-
 ## Libraries
 
 I used several libraries which were installed using the PlatformIO IDE:
